@@ -20,6 +20,7 @@ function Login() {
     console.log('submit login: ', data)
     const res = await authorizedAxiosInstance.post(`${API_ROOT}/v1/users/login`, data)
     console.log(res.data)
+    toast.success(res.data?.message)
   }
 
   return (
