@@ -8,6 +8,7 @@ import Divider from '@mui/material/Divider'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { API_ROOT } from '~/utils/constants'
+import authorizedAxiosInstance from '~/utils/authorizedAxios'
 
 function Dashboard() {
   const [user, setUser] = useState(null)
@@ -15,8 +16,10 @@ function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_ROOT}/v1/dashboards/access`)
-        console.log(res.data)
+        const res = await authorizedAxiosInstance.get(`${API_ROOT}/v1/dashboards/access`)
+        console.log('Data from API: ', res.data)
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+        console.log('Data from Localstorage: ', userInfo)
         setUser(res.data)
       } catch (error) {
         toast.error(error.response?.data?.message || error?.message)
