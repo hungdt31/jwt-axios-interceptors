@@ -1,7 +1,7 @@
 // Author: TrungQuanDev: https://youtube.com/@trungquandev
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
-
+import { JwtProvider } from '~/providers/JwtProvider'
 /**
  * Mock nhanh thông tin user thay vì phải tạo Database rồi query.
  * Nếu muốn học kỹ và chuẩn chỉnh đầy đủ hơn thì xem Playlist này nhé:
@@ -32,10 +32,54 @@ const login = async (req, res) => {
     }
 
     // Trường hợp nhập đúng thông tin tài khoản, tạo token và trả về cho phía Client
+    // Tạo thông tin payload để đính kèm trong JWT Token: bao gồm _id và email của user
+    const userInfo = {
+      id: MOCK_DATABASE.USER.ID,
+      email: MOCK_DATABASE.USER.EMAIL
+    }
 
-    res.status(StatusCodes.OK).json({ message: 'Login API success!' })
+    // Tạo ra hai loại token, accessToken, và refreshToken để trả về cho phía FE
+    const accessToken = await JwtProvider.generateToken(
+      userInfo,
+      ACCESS_TOKEN_SECRET_SIGNATURE,
+      '1h'
+    )
+
+    const refreshToken = await JwtProvider.generateToken(
+      userInfo,
+      REFRESH_TOKEN_SECRET_SIGNATURE,
+      '14 days'
+    )
+
+    // /**
+    //  * Xử lý trường hợp trả về http only cookie cho phía client
+    //  * Về cái maxAge và thư viện ms
+    //  * Đối với maxAge - thời gian sống của Cookie thì chúng ta sẽ để tối đa 2 tuần tùy dự án. Lưu ý thời gian sống của cookie khác với thời gian sống của token.
+    //  */
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+  
+    res.status(StatusCodes.OK).json({
+      ... userInfo,
+      accessToken,
+      refreshToken
+    })
   } catch (error) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error
+    })
   }
 }
 
