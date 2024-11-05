@@ -9,10 +9,12 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { API_ROOT } from '~/utils/constants'
 import authorizedAxiosInstance from '~/utils/authorizedAxios'
+import { Button } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
   const [user, setUser] = useState(null)
-
+  const navigate = useNavigate()
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,6 +30,18 @@ function Dashboard() {
     fetchData()
   }, [])
 
+  const handleLogout = async () => {
+    // Trường hợp 1: DÙng localStorage -> chỉ cần xóa thông tin user trong localstorage phía Front-end
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userInfo');
+    // Trường hợp 2: Dùng HttpOnly Cookie -> cần gửi request lên server để xóa cookie
+    await authorizedAxiosInstance.delete(`${API_ROOT}/v1/users/logout`, {}, { withCredentials: true });
+    setUser(null);
+
+    // cuối cùng điều hướng đến trang login sau khi logout thành công
+    navigate("/login")
+  }
   if (!user) {
     return (
       <Box sx={{
@@ -58,7 +72,7 @@ function Dashboard() {
         <Typography variant="span" sx={{ fontWeight: 'bold', '&:hover': { color: '#fdba26' } }}>{user?.email}</Typography>
         &nbsp; đăng nhập thành công thì mới cho truy cập vào.
       </Alert>
-
+      <Button variant="contained" color="primary" sx={{ my: 2 }} onClick={handleLogout}>Log out</Button>
       <Divider sx={{ my: 2 }} />
     </Box>
   )

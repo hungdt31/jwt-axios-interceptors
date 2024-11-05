@@ -42,14 +42,14 @@ const login = async (req, res) => {
     const accessToken = await JwtProvider.generateToken(
       userInfo,
       ACCESS_TOKEN_SECRET_SIGNATURE,
-      '5s'
-    )
+      '1h'
+    );
 
     const refreshToken = await JwtProvider.generateToken(
       userInfo,
       REFRESH_TOKEN_SECRET_SIGNATURE,
       '14 days'
-    )
+    );
 
     // /**
     //  * Xử lý trường hợp trả về http only cookie cho phía client
@@ -86,6 +86,10 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     // Do something
+    // Xóa cookie trong trường hợp logout
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
+    
     res.status(StatusCodes.OK).json({ message: 'Logout API success!' })
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
