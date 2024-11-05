@@ -89,7 +89,7 @@ const logout = async (req, res) => {
     // Xóa cookie trong trường hợp logout
     res.clearCookie('accessToken')
     res.clearCookie('refreshToken')
-    
+
     res.status(StatusCodes.OK).json({ message: 'Logout API success!' })
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
@@ -99,9 +99,36 @@ const logout = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     // Do something
-    res.status(StatusCodes.OK).json({ message: ' Refresh Token API success.' })
+    // Cách 1: Lấy refreshToken từ req.cookies
+    const refreshTokenFromCookie = req.cookies?.refreshToken
+    // Cách 2: Từ localStorage gửi lên body
+    const refreshTokenFromBody = req.body?.refreshToken
+    // verify refreshToken xem có hợp lệ không
+    const refreshTokenDecoded = await JwtProvider.verifyToken(
+      refreshTokenFromBody || refreshTokenFromCookie,
+      REFRESH_TOKEN_SECRET_SIGNATURE
+    );
+    // Lấy thông tin payload từ refreshToken
+
+    // Tạo accessToken mới
+    const accessToken = await JwtProvider.generateToken(
+      refreshTokenDecoded,
+      ACCESS_TOKEN_SECRET_SIGNATURE,
+      '1h'
+    );
+    // Res lại cookie accessToken mới cho trường hợp sử dụng cookie
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    });
+    // Trả về cho phía client một accessToken mới
+    res.status(StatusCodes.OK).json({ accessToken })
   } catch (error) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Refresh token failed!',
+    })
   }
 }
 
