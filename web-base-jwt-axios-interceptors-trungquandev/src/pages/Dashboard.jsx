@@ -31,6 +31,21 @@ function Dashboard() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await authorizedAxiosInstance.get(`${API_ROOT}/v1/dashboards/access`)
+        console.log('Data from API: ', res.data)
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+        console.log('Data from Localstorage: ', userInfo)
+        setUser(res.data)
+      } catch (error) {
+        toast.error(error.response?.data?.message || error?.message)
+      }
+    }
+    fetchData()
+  }, [])
+
   const handleLogout = async () => {
     await handleLogoutAPI();
 
