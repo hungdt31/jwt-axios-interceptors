@@ -19,7 +19,8 @@ const generateToken = async (userInfo, secretSignature, tokenLife) => {
 const verifyToken = async (token, secretSignature) => {
   try {
     // Hàm verify của thư viện Jwt
-    return JWT.verify(token, secretSignature)
+    // Nếu token hợp lệ thì sẽ trả về giá trị payload giải mã được
+    return JWT.verify(token, secretSignature);
   } catch(error) {
     throw new Error(error);
   }

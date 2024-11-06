@@ -27,7 +27,7 @@ const MOCK_DATABASE = {
 const login = async (req, res) => {
   try {
     if (req.body.email !== MOCK_DATABASE.USER.EMAIL || req.body.password !== MOCK_DATABASE.USER.PASSWORD) {
-      res.status(StatusCodes.FORBIDDEN).json({ message: 'Your email or password is incorrect!' })
+      res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Your email or password is incorrect!' })
       return;
     }
 
@@ -42,13 +42,15 @@ const login = async (req, res) => {
     const accessToken = await JwtProvider.generateToken(
       userInfo,
       ACCESS_TOKEN_SECRET_SIGNATURE,
-      '1h'
+      '5s',
+      // '1h'
     );
 
     const refreshToken = await JwtProvider.generateToken(
       userInfo,
       REFRESH_TOKEN_SECRET_SIGNATURE,
-      '14 days'
+      '15s',
+      // '7d'
     );
 
     // /**
@@ -108,14 +110,19 @@ const refreshToken = async (req, res) => {
       refreshTokenFromBody || refreshTokenFromCookie,
       REFRESH_TOKEN_SECRET_SIGNATURE
     );
+    console.log('refreshTokenDecoded: ', refreshTokenDecoded);
     // Lấy thông tin payload từ refreshToken
 
     // Tạo accessToken mới
     const accessToken = await JwtProvider.generateToken(
-      refreshTokenDecoded,
+      {
+        id: refreshTokenDecoded.id,
+        email: refreshTokenDecoded.email
+      },
       ACCESS_TOKEN_SECRET_SIGNATURE,
-      '1h'
+      '5s'
     );
+
     // Res lại cookie accessToken mới cho trường hợp sử dụng cookie
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -123,9 +130,11 @@ const refreshToken = async (req, res) => {
       sameSite: 'none',
       maxAge: ms('14 days')
     });
+    
     // Trả về cho phía client một accessToken mới
     res.status(StatusCodes.OK).json({ accessToken })
   } catch (error) {
+    console.log('Refresh token is not valid!')
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Refresh token failed!',
     })

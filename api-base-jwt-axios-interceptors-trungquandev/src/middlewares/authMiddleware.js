@@ -44,10 +44,9 @@ const isAuthorized = async (req, res, next) => {
 
     // Trường hợp lỗi 01: Nếu accessToken bị hết hạn (expired) thì cần trả về mã lối GONE - 410 cho phía FE
     if (error.message?.includes('jwt expired')) {
-      res.status(StatusCodes.GONE).json({
+      return res.status(StatusCodes.GONE).json({
         message: 'Need to refresh token'
-      })
-      return;
+      });
     }
 
     // Trường hợp lỗi 02: Nếu accessToken không hợp lệ ngoài hết hạn thì trả về mã 401 cho phía FE xử lý logout hoặc hoặc gọi API logout tùy trường hợp
